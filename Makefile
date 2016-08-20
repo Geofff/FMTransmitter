@@ -121,7 +121,7 @@ CFLAGS = -g$(DEBUG)
 CFLAGS += $(CDEFS) $(CINCS)
 CFLAGS += -O$(OPT)
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CFLAGS += -Wall -Wstrict-prototypes
+CFLAGS += -Wall -Wstrict-prototypes -Wextra
 CFLAGS += -Wa,-adhlns=$(<:.c=.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
@@ -320,7 +320,7 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: begin gccversion sizebefore build sizeafter program end
+all: begin gccversion sizebefore build sizeafter end
 
 build: elf hex eep lss sym
 

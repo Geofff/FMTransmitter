@@ -1,10 +1,8 @@
 #include <avr/io.h>
 #include <avr/eeprom.h>
-#include "lcd.h"
 #include <util/delay.h>
+#include "lcd.h"
 
-#define F_CPU 1000000
-#define NULL 0 
 #define BUTTON_UP PB4
 #define BUTTON_DOWN PB2
 #define USE_EEPROM 0
@@ -15,8 +13,11 @@
 
 uint16_t EEMEM FAV_FREQ = 20;
 
+void initLCD(void);
+void updateLCD(uint16_t);
+void updateFavourite(uint16_t);
 
-static const PROGMEM uint8_t SYMBOL_LINE[] = {
+static const PROGMEM uint8_t SYMBOL_LINE[8] = {
 	0b00000,
 	0b00000,
 	0b00000,
@@ -28,7 +29,7 @@ static const PROGMEM uint8_t SYMBOL_LINE[] = {
 };
 
 
-static const PROGMEM uint8_t SYMBOL_HALF_LINE[] = {
+static const PROGMEM uint8_t SYMBOL_HALF_LINE[8] = {
 	0b00000,
 	0b00000,
 	0b00000,
@@ -40,7 +41,7 @@ static const PROGMEM uint8_t SYMBOL_HALF_LINE[] = {
 };
 
 
-static const PROGMEM uint8_t SYMBOL_ARROWS[] = {
+static const PROGMEM uint8_t SYMBOL_ARROWS[8] = {
 	0b00100,
 	0b01110,
 	0b11111,
@@ -51,7 +52,7 @@ static const PROGMEM uint8_t SYMBOL_ARROWS[] = {
 	0b00100
 };
 
-static const PROGMEM uint8_t SYMBOL_HEART[] = {
+static const PROGMEM uint8_t SYMBOL_HEART[8] = {
 	0b00000,
 	0b00000,
 	0b01010,
@@ -62,7 +63,7 @@ static const PROGMEM uint8_t SYMBOL_HEART[] = {
 	0b00100
 };
 
-uint8_t* SYMBOLS[] = {
+static const uint8_t* SYMBOLS[] = {
 	SYMBOL_ARROWS,
 	SYMBOL_HEART,
 	SYMBOL_LINE,
@@ -120,7 +121,7 @@ void updateLCD(uint16_t freq){
 	}
 }
 
-int main() {
+int main(void) {
 	// Set Buttons as inputs
 	DDRB &= ~(1 << BUTTON_UP);
 
@@ -153,6 +154,7 @@ int main() {
 		lcd_puts("Entered config");
 		_delay_ms(3000);
 	}
+
 	while(1) {
 		// Grab current button state
 		currentButtonState = (((PINB & (1 << BUTTON_UP)) != 0) << 1) + ((PINB & (1 << BUTTON_DOWN)) != 0);
