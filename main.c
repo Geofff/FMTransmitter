@@ -86,6 +86,8 @@ void updateFavourite(uint16_t freq){
 	if (USE_EEPROM == 1){
 		eeprom_update_word(&FAV_FREQ, freq);
 	}
+
+	// Flash LCD screen as output
 	lcd_clrscr();
 	PORTB |= (1 << OUTPUT_PIN);
 	_delay_ms(300);
@@ -93,20 +95,24 @@ void updateFavourite(uint16_t freq){
 	updateLCD(freq);
 }
 void updateLCD(uint16_t freq){
+	// Set the PWM duty cycle to the appropriate frequency
+	// TODO Set it to actual freq, rather than numerical value
 	OCR1A = (freq) % 1024;
+
+	//Init for a new draw
 	lcd_clrscr();
 	lcd_home();
 
-	
 	// Draw number
 	lcd_gotoxy(7,1);
 	lcd_putc(((freq / 1000) % 10) + '0');
-	lcd_putc(((freq / 100) % 10) + '0');
-	lcd_putc(((freq / 10) % 10) + '0');
+	lcd_putc(((freq / 100)  % 10) + '0');
+	lcd_putc(((freq / 10)   % 10) + '0');
 	lcd_putc('.');
-	lcd_putc(((freq / 1) % 10) + '0');
+	lcd_putc(((freq / 1)    % 10) + '0');
 	lcd_puts("MHz");
 	lcd_putc(0);
+
 	// Draw Heart
 	if (freq == eeprom_read_word(&FAV_FREQ)){
 		lcd_gotoxy(0,1);
@@ -115,54 +121,60 @@ void updateLCD(uint16_t freq){
 }
 
 int main() {
-	
+	// Set Buttons as inputs
 	DDRB &= ~(1 << BUTTON_UP);
+
+	// Set PWM pin as output
 	DDRB |= (1 << OUTPUT_PIN);
+
+	// Set up registers for PWM
 	TCCR1A = (1 << COM1A1) | (1 << WGM12) | (1 << WGM11) | (1 << WGM10);
 	OCR1A = 0x10;
 	TCCR1B = (1 << CS10);
 	
+	initLCD();
+	// Init variables
 	uint8_t currentButtonState = 0;	
 	uint8_t lastButtonState = 0;
-	initLCD();
 	int8_t iter = 0;
 	uint8_t config = 0;
+	uint16_t freq = eeprom_read_word(&FAV_FREQ);
+
+	// TODO
 	DDRD |= (1 << PD6);
+
+	// Grab the initial button state
 	currentButtonState = (((PINB & (1 << BUTTON_UP)) != 0) << 1) + ((PINB & (1 << BUTTON_DOWN)) != 0);
-	// Enter 'config' mode
+	// And enter 'config' mode if both are pressed on startup
 	if (currentButtonState == 0b11){
+		// Notify user we are in config
 		config = 1;
 		lcd_clrscr();
 		lcd_puts("Entered config");
 		_delay_ms(3000);
 	}
-	uint16_t freq;
-	if (config){
-		freq = 20;
-	} else {
-		uint16_t freq = eeprom_read_word(&FAV_FREQ);
-	}
 	while(1) {
+		// Grab current button state
 		currentButtonState = (((PINB & (1 << BUTTON_UP)) != 0) << 1) + ((PINB & (1 << BUTTON_DOWN)) != 0);
 		PORTD &= ~(1 << PD6);
 		PORTD |= (currentButtonState&0b01 << PD6);
+
+		// If this isn't the first time we've had the button down
+		// (To prevent button debouncing)
 		if (lastButtonState != 0){
+			// Increase our iteration counter if button continues in its current state
 			if (currentButtonState == lastButtonState){
 				iter++;
 			}
 	
 			// Test for button down for 500ms (Freq Down)
 			if (currentButtonState == 0b01 && iter > 20){
-				if (config)
-					iter += 4;
 				iter -= 6;
 				freq--;
 			}
 
 			// Test for button up for 500ms (Freq Up)
 			if (currentButtonState == 0b10 && iter > 20){
-				if (config)
-					iter += 4;
 				iter -= 6;
 				freq++;
 			}
@@ -177,6 +189,7 @@ int main() {
 
 			// Test for release
 			if (currentButtonState == 0b00){
+				// On release, fulfill last button press and reset counter
 				if (iter > 0){
 					if (lastButtonState == 0b01){
 						freq--;
@@ -191,6 +204,7 @@ int main() {
 		}
 		lastButtonState = currentButtonState;
 		if (config) {
+			// Essentially a custom updateLCD() func
 			lcd_clrscr();
 			lcd_puts("100Mhz value:");
 			lcd_gotoxy(0,1);
