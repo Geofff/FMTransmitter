@@ -7,11 +7,8 @@
 #define BUTTON_DOWN PB2
 #define USE_EEPROM 1
 #define OUTPUT_PIN PB3
-#define MAX_FREQ 1200
-#define MIN_FREQ 800
-#define DELTA_FREQ (MAX_FREQ - MIN_FREQ)
 
-uint16_t EEMEM FAV_FREQ = 200;
+uint16_t EEMEM FAV_FREQ = 931;
 
 void initLCD(void);
 void updateLCD(uint16_t);
@@ -81,7 +78,9 @@ void initLCD(void){
 		}
 	}
 }
-
+uint8_t freqToPWM(uint16_t freq){
+	return (uint8_t) (-0.0008*freq*freq + 0.9154*freq + 73.933);
+}
 void updateFavourite(uint16_t freq){
 	// Check current, set EEPROM
 	if (USE_EEPROM == 1){
@@ -97,8 +96,7 @@ void updateFavourite(uint16_t freq){
 }
 void updateLCD(uint16_t freq){
 	// Set the PWM duty cycle to the appropriate frequency
-	// TODO Set it to actual freq, rather than numerical value
-	OCR1A = (freq) % 1024;
+	OCR1A = freqToPWM(freq);
 
 	//Init for a new draw
 	lcd_clrscr();
