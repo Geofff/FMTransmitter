@@ -5,13 +5,13 @@
 
 #define BUTTON_UP PB4
 #define BUTTON_DOWN PB2
-#define USE_EEPROM 0
+#define USE_EEPROM 1
 #define OUTPUT_PIN PB3
 #define MAX_FREQ 1200
 #define MIN_FREQ 800
 #define DELTA_FREQ (MAX_FREQ - MIN_FREQ)
 
-uint16_t EEMEM FAV_FREQ = 20;
+uint16_t EEMEM FAV_FREQ = 200;
 
 void initLCD(void);
 void updateLCD(uint16_t);
@@ -129,7 +129,7 @@ int main(void) {
 	DDRB |= (1 << OUTPUT_PIN);
 
 	// Set up registers for PWM
-	TCCR1A = (1 << COM1A1) | (1 << WGM12) | (1 << WGM11) | (1 << WGM10);
+	TCCR1A = (1 << COM1A1) | (1 << WGM12) | (0 << WGM11) | (1 << WGM10);
 	OCR1A = 0x10;
 	TCCR1B = (1 << CS10);
 	
